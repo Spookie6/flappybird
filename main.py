@@ -48,11 +48,10 @@ class Game:
 
 class Player:
 	def	__init__(self,) -> None:
-		self.pos = Pos(250,100)	
+		self.pos = Pos(250,resolution[1]/2 - 16)
 		self.rect = pg.Rect(self.pos.x, self.pos.y, 32, 32)
 		self.vertSpeed = 0
 		self.dead = False
-		self.inPipe = False
 		self.score = 0
 		self.nextPipe = None
 
@@ -98,14 +97,14 @@ class Pipe:
 			pg.Rect(self.pos.x, 0, constants.pipeWidth, gap),
 			pg.Rect(self.pos.x, gap + self.pipeGap, constants.pipeWidth, resolution[0] - (gap + self.pipeGap)),
 		]
-		self.color = randColor = random.choice(["red", "blue", "green", "orange", "cyan"])
+		self.color = randColor = random.choice(["red", "blue", "green", "yellow", "orange", "cyan"])
   
 	def move(self) -> None:
 		self.pos.x -= constants.pipeSpeed * dt
 		self.rects[0][0], self.rects[1][0] = (self.pos.x, self.pos.x)
   
 		if self.pos.x + constants.pipeWidth <= -10:
-			game.pipes.pop(0)
+			del game.pipes[0]
   
 	def draw(self, screen) -> None:
 		for rect in self.rects:
@@ -130,6 +129,15 @@ while running:
 		if event.type == pg.KEYDOWN:
 			if keys[pg.K_ESCAPE]:
 				pg.quit()
+			if keys[pg.K_SPACE] and not game.hasStarted:
+				game.hasStarted = True
+				player.move(keys)
+			if keys[pg.K_r] and game.gameOver:
+				game = Game()
+				player = Player()
+				game.setPlayer(player)
+				game.addPipe(Pipe.random())
+				player.nextPipe = game.pipes[0]
 	
 	# fill the screen with a color to wipe away anything from last frame
 	screen.fill("black")
@@ -138,16 +146,23 @@ while running:
 	if resolution[0] - game.pipes[len(game.pipes) - 1].rects[0][0] + constants.pipeWidth >= constants.pipeDistance:
 		game.addPipe(Pipe.random())
 
-	for pipe in game.pipes:
-		if not game.player.dead: pipe.move()
-		pipe.draw(screen)
- 
-	game.player.move(keys)
+	if not game.hasStarted:
+		startTitle = constants.font.render("Press SPACE to start", False, "White")
+		screen.blit(startTitle, (resolution[0]/2 - startTitle.get_rect()[2]/2, resolution[1] - startTitle.get_rect()[3] - 20))
+	else:
+		for pipe in game.pipes:
+			if not game.player.dead: pipe.move()
+			pipe.draw(screen)
+
+		game.player.move(keys)
+	
 	game.player.draw(screen)
- 
+
 	if game.gameOver:
 		title = constants.font.render("Game Over", False, "White",)
+		title2 = constants.font.render("Press 'R' to restart", False, "White",)
 		screen.blit(title, (resolution[0]/2 - title.get_rect()[2]/2, resolution[1]/2 - title.get_rect()[3]/2))
+		screen.blit(title2, (resolution[0]/2 - title2.get_rect()[2]/2, resolution[1]/2 - title2.get_rect()[3]/2 + title.get_rect()[3] + 20))
 
 	# flip() the display to put your work on screen
 	pg.display.flip()

@@ -2,6 +2,6 @@ items = [1,2,3,4]
 
 print(items)
 
-items.pop(0)
+newItems = items[1:]
 
-print(items)
+print(newItems)
