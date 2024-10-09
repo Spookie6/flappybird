@@ -52,6 +52,8 @@ class Player:
 		self.rect = pg.Rect(self.pos.x, self.pos.y, 32, 32)
 		self.vertSpeed = 0
 		self.dead = False
+		self.inPipe = False
+		self.score = 0
 
 	def move(self, keys) -> None:
 		if game.gameOver: return
@@ -70,11 +72,26 @@ class Player:
 	
 	def checkCollisions(self) -> None:
 		for pipe in game.pipes:
+			print(self.rect.colliderect(pipe.rects[2]))
 			if self.rect.colliderect(pipe.rects[0]) or self.rect.colliderect(pipe.rects[1]):
 				self.dead = True
+			if self.rect.colliderect(pipe.rects[2]):
+				self.inPipe = True
+			else:
+				if self.inPipe:
+					self.inPipe = False
+					self.score += 1
+    
+	def updateScore(self) -> None:
+		if self.pos.x >= self.nextPipe.pos.x + constants.pipeWidth:
+			self.score += 1
+			currentPipeIndex = game.pipes.index(self.nextPipe)
+			self.nextPipe = game.pipes[currentPipeIndex]
    
 	def draw(self, screen) -> None:
 		pg.draw.rect(screen, "white", self.rect)
+		scoreTitle = constants.font.render(f"{self.score:00d}", False, "White")
+		screen.blit(scoreTitle, (resolution[0]/2 - scoreTitle.get_rect()[2]/2, resolution[1]/2 - scoreTitle.get_rect()[3]/2))
 
 class Pipe:
 	possiblePipes = [80, 160, 240, 320, 400, 480]
@@ -84,7 +101,8 @@ class Pipe:
 		self.pipeGap = constants.pipeGap
 		self.rects = [
 			pg.Rect(self.pos.x, 0, constants.pipeWidth, gap),
-			pg.Rect(self.pos.x, gap + self.pipeGap, constants.pipeWidth, 1920 - (gap + self.pipeGap))
+			pg.Rect(self.pos.x, gap + self.pipeGap, constants.pipeWidth, resolution[0] - (gap + self.pipeGap)),
+			pg.Rect(self.pos.x, 0, constants.pipeWidth, resolution[0])
 		]
   
 	def move(self) -> None:
